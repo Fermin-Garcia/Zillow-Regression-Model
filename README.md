@@ -1,56 +1,85 @@
-# Zillow Single Family Properties Price Prediction
+# Zillow Single-Family Home Value Prediction
+
+By Fermin F. Garcia IV
 
 ## Overview
-This project aims to create an improved regression model to predict the property tax assessed values ('taxvaluedollarcnt') of single family properties that had a transaction during 2017.
+
+This project builds a regression model to predict the property tax assessed value (`taxvaluedollarcnt`) of single-family homes from Zillow's 2017 property data. It also looks for the features that drive home value the most.
+
+The work was completed as part of the Codeup Data Science program, with a short presentation of the findings written for Zillow's data science team.
 
 ## Goals
-- Develop a regression model to accurately predict the property tax assessed values.
-- Identify the key drivers of property value.
-- Deliver a report outlining the steps taken, key findings, and recommendations.
-- Prepare for a 5-minute presentation to present findings to the Zillow data science team.
 
-## Table of Contents
-1. [Data Acquisition](#data-acquisition)
-2. [Data Preparation](#data-preparation)
-3. [Exploratory Data Analysis](#exploratory-data-analysis)
-4. [Modeling and Evaluation](#modeling-and-evaluation)
-5. [Conclusion and Recommendations](#conclusion-and-recommendations)
+- Build a regression model that predicts assessed home value from property attributes.
+- Identify the main drivers of home value.
+- Recommend next steps for improving the model.
 
-## Data Acquisition
-The data for this project was acquired from the properties_2017, predictions_2017, and propertylandusetype tables. Import from a SQL database
+## Data
 
-## Data Preparation
-The initial dataset was cleaned and prepared using the `prepare.py` module. The cleaning process involved...
+- **Source:** Codeup's copy of the Zillow database (`properties_2017` joined to `propertylandusetype`).
+- **Filter:** properties classified as "Single Family Residential".
+- **Counties:** Los Angeles, Orange, and Ventura (California), derived from FIPS codes.
+- **Sample:** 40,000 rows, split 56% train / 24% validate / 20% test (22,400 training rows).
 
-## Exploratory Data Analysis
-During the exploratory phase, several key relationships were identified. These relationships were tested for statistical significance using...
+### Data Dictionary
 
-## Modeling and Evaluation
-Several regression models were evaluated for this project. The best-performing model was...
+| Feature | Description |
+| --- | --- |
+| `bedrooms` | Number of bedrooms |
+| `bathrooms` | Number of bathrooms (half baths count as 0.5) |
+| `calculated_finished_squarefeet` | Finished living area in square feet |
+| `year_built` | Year the home was built |
+| `tax_amount` | Property tax billed for the 2017 assessment year |
+| `la_county_ca`, `orange_county_ca`, `ventura_county_ca` | One-hot encoded county |
+| `tax_valuedollar_cnt` | **Target:** tax assessed value of the property, in dollars |
 
-## Conclusion and Recommendations
-The final model performed well, achieving an accuracy of... Key drivers of property values were found to be...
+## Preparation
 
-## Instructions for Replication
+- Dropped rows with missing values.
+- Removed outliers with bounds set per feature: 1 to 6 bedrooms, 0.5 to 6.5 bathrooms, and 500 to 4,800 square feet.
+- Mapped FIPS codes to county names and one-hot encoded them.
+- Scaled features with `MinMaxScaler` before modeling.
+
+## Exploration
+
+- A correlation heat map showed `calculated_finished_squarefeet`, `bathrooms`, and `tax_amount` had the strongest relationships with assessed value.
+- Bathroom count was tested for correlation with assessed value (H<sub>0</sub>: no correlation; H<sub>a</sub>: correlation exists).
+
+## Modeling Results
+
+Models were compared by root mean squared error (RMSE). The baseline predicts the mean assessed value of the training set for every home.
+
+| Model | RMSE |
+| --- | --- |
+| Baseline (mean) | ~$430,000 |
+| Linear Regression (OLS) | ~$75,700 |
+| LassoLars | ~$75,700 |
+
+Ordinary least squares linear regression performed best by a small margin and cut prediction error by about 82% compared to the baseline.
+
+## Limitations
+
+`tax_amount` is calculated from the assessed value, so including it as a feature leaks information about the target and makes the model look better than it would on homes without a tax bill. The next version should drop `tax_amount` and rely on physical and location features only.
+
+## Next Steps
+
+- Remove `tax_amount` and retrain to measure performance using only property features.
+- Add location detail beyond county (zip code, latitude/longitude, lot size).
+- Add neighborhood-level demographic data such as income and education.
+- Try nonlinear models such as random forests or gradient boosting.
+
+## How to Reproduce
+
 1. Clone this repository.
-2. Run `acquire.py` to download the data.
-3. Run `prepare.py` to clean and prepare the data.
-4. Open and run the `Final Report.ipynb` notebook.
+2. Create an `env.py` file with `user`, `password`, `host`, and `database` values for a MySQL server that has the Zillow database. Do not commit this file; it is already listed in `.gitignore`.
+3. Install the requirements: `pandas`, `numpy`, `scikit-learn`, `scipy`, `matplotlib`, `seaborn`, and `pymysql`.
+4. Run `final_presentation.ipynb` from top to bottom. It uses the functions in `wrangle.py` to acquire, prepare, and split the data.
 
-## Future Work
-Given more time, future iterations of this project might...
+## Files
 
-## Key Findings
-- Finding 1
-- Finding 2
-- Finding 3
-
-## Recommendations
-- Recommendation 1
-- Recommendation 2
-- Recommendation 3
-
-## Project Members
-- Your Name
-
-Feel free to contact me if you have any questions!
+| File | Purpose |
+| --- | --- |
+| `final_presentation.ipynb` | Final report and presentation notebook |
+| `wrangle.py` | Acquire, prepare, and split functions used by the final notebook |
+| `acquire.py`, `prepare.py`, `explore.py`, `modeling.py` | Stage-by-stage modules |
+| `acquire.ipynb`, `prepare.ipynb`, `explore.ipynb`, `modeling.ipynb` | Working notebooks for each stage |
